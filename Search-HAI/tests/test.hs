@@ -1,8 +1,8 @@
 
-import Test.Tasty
-import Test.Tasty.HUnit
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
-import Algorithms.SearchHAI
+import           Algorithms.SearchHAI
 
 
 graph :: Graph String Int
@@ -20,4 +20,8 @@ tests :: TestTree
 tests = testGroup "Tests" [dfsUnitTests]
 
 
-dfsUnitTests = testGroup "dfs Unit tests" [ testsCase "Find path with dfs fro S to G" $ dfs "S" "G" graph == ["S", "A", "B", "C", "G"]]
+dfsUnitTests = testGroup
+        "dfs Unit tests"
+        [ testsCase "Find path with dfs fro S to G" $
+          dfs "S" "G" graph ==
+          ["S", "A", "B", "C", "G"]]
