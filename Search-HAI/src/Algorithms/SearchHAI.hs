@@ -10,6 +10,9 @@ import qualified Data.Map     as M
 
 type Graph v e = Map v [(v, e)]
 
+-- | Create graph from list
+fromList :: [(v, (v, e))] -> Graph v e
+fromList = M.fromList
 
 -- | Depth-First Tree Search
 -- Find path in graph from start vertex to desired vertex
@@ -35,7 +38,13 @@ dfs s g graph = go
                                    desired_vertex
                                    (priority - 1)
                                    (foldr
-                                        (\v_new pq -> HPSQ.insert v_new priority (v ++ [v_new]) pq)
+                                        (\v_new pq ->
+                                              HPSQ.insert
+                                                  v_new
+                                                  priority
+                                                  (v ++
+                                                   [v_new])
+                                                  pq)
                                         priority_queue
                                         (neighbours current_vertex))
           neighbours v = map first $
