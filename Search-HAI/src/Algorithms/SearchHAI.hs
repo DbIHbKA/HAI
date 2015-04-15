@@ -9,8 +9,6 @@ import           Data.Map      (Map)
 import qualified Data.Map      as M
 import           Data.Maybe    (fromMaybe)
 
-import Debug.Trace
-
 
 type Graph v e = Map v [(v, e)]
 
@@ -39,15 +37,17 @@ dfs s g graph = go
              [s]
              (-1)
              s)
-    where go desired_vertex priority_queue = trace
-                  (show (HPSQ.toList priority_queue)) $
-              case HPSQ.findMin priority_queue of
+    where go desired_vertex priority_queue = case HPSQ.findMin priority_queue of
                   Nothing -> []
                   Just (v,p,k) -> if L.elem desired_vertex v
                           then v
                           else go
                                    desired_vertex
-                                   (add_neighbours priority_queue k (p-1) v)
+                                   (add_neighbours
+                                        priority_queue
+                                        k
+                                        (p - 1)
+                                        v)
           neighbours v = map fst $
               fromMaybe [] (M.lookup v graph)
           add_neighbours pq cv p v = foldr
