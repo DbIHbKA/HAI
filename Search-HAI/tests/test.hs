@@ -22,6 +22,5 @@ tests = testGroup "Tests" [dfsUnitTests]
 
 dfsUnitTests = testGroup
         "dfs Unit tests"
-        [ testsCase "Find path with dfs fro S to G" $
-          dfs "S" "G" graph ==
-          ["S", "A", "B", "C", "G"]]
+        [ testCase "Find path with dfs fro S to G" $
+          (dfs "S" "G" graph) `compare` ["S", "A", "B", "C", "G"] @?= EQ]
