@@ -1,51 +1,62 @@
+{-# LANGUAGE OverloadedStrings #-}
 
 module Algorithms.SearchHAI where
 
-import           Data.HashPSQ (HashPSQ)
-import qualified Data.HashPSQ as HPSQ
-import qualified Data.List    as L
-import           Data.Map     (Map)
-import qualified Data.Map     as M
+import           Data.Hashable (Hashable)
+import qualified Data.HashPSQ  as HPSQ
+import qualified Data.List     as L
+import           Data.Map      (Map)
+import qualified Data.Map      as M
+import           Data.Maybe    (fromMaybe)
+
+import Debug.Trace
 
 
 type Graph v e = Map v [(v, e)]
 
 -- | Create graph from list
-fromList :: [(v, (v, e))] -> Graph v e
-fromList = M.fromList
+fromList :: Ord v
+         => [(v,(v,e))] -> Graph v e
+fromList = foldr
+        (\(k,(v,w)) m ->
+              M.insertWith
+                  (++)
+                  k
+                  [(v, w)]
+                  m)
+        M.empty
 
--- | Depth-First Tree Search
+-- | Depth-Fst Tree Search
 -- Find path in graph from start vertex to desired vertex
-dfs :: v  -- ^ start vertex
+dfs :: (Ord v,Hashable v, Show v)
+    => v  -- ^ start vertex
     -> v  -- ^ desired vertex
     -> Graph v e -- ^ graph
     -> [v]
 dfs s g graph = go
-        s
         g
-        (-2)
         (HPSQ.singleton
-             s
+             [s]
              (-1)
-             [s])
-    where go current_vertex desired_vertex priority priority_queue = case HPSQ.findMin
-                                                                              priority_queue of
+             s)
+    where go desired_vertex priority_queue = trace
+                  (show (HPSQ.toList priority_queue)) $
+              case HPSQ.findMin priority_queue of
                   Nothing -> []
-                  Just (k,p,v) -> if L.elem desired_vertex v
+                  Just (v,p,k) -> if L.elem desired_vertex v
                           then v
                           else go
-                                   k
                                    desired_vertex
-                                   (priority - 1)
-                                   (foldr
-                                        (\v_new pq ->
-                                              HPSQ.insert
-                                                  v_new
-                                                  priority
-                                                  (v ++
-                                                   [v_new])
-                                                  pq)
-                                        priority_queue
-                                        (neighbours current_vertex))
-          neighbours v = map first $
-              fromMaybe [] M.lookup v graph
+                                   (add_neighbours priority_queue k (p-1) v)
+          neighbours v = map fst $
+              fromMaybe [] (M.lookup v graph)
+          add_neighbours pq cv p v = foldr
+                  (\v_new _pq ->
+                        HPSQ.insert
+                            (v ++
+                             [v_new])
+                            p
+                            v_new
+                            _pq)
+                  pq
+                  (neighbours cv)
