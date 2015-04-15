@@ -1,16 +1,23 @@
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Algorithms.SearchHAI
-       (bfs, dfs) where
+       ( bfs
+       , dfs
+       , aStarTS
+       , aStar
+       ) where
 
-import           Algorithms.DataTypes (Graph, neighbours)
+import           Algorithms.Graph     (Graph, neighbours, neighboursWithEdges)
+import           Algorithms.Heuristic (Heuristic)
 import           Data.Hashable        (Hashable)
 import qualified Data.HashPSQ         as HPSQ
 import qualified Data.List            as L
+import qualified Data.Set             as S
 
 
 -- | Depth-First Tree Search
--- Find path in graph from start vertex to desired vertex
+-- Finds path between two vertices in a graph
 -- If there is no path return empty path
 dfs :: (Ord v,Hashable v)
     => v  -- ^ start vertex
@@ -38,7 +45,7 @@ dfs s g graph = go
 
 
 -- | Breadth-First Tree Search
--- Find shortest path in graph between two vertexes
+-- Finds shortest path between two vertices in a graph
 -- if there is no path return empty path
 bfs :: (Ord v,Hashable v)
     => v  -- ^ start vertex
@@ -65,7 +72,72 @@ bfs s g graph = go
                                         graph)
 
 
+-- | A* Tree search
+-- Finds the least weight path between two vertices in a graph
+-- if there is no path return empty path
+aStarTS :: (Ord v,Hashable v,Ord e,Num e)
+        => v -> v -> Graph v e -> Heuristic v e -> [v]
+aStarTS s g graph heuristic = go
+        g
+        (HPSQ.singleton
+             [s]
+             (heuristic s)
+             s)
+    where go desired_vertex priority_queue = case HPSQ.minView priority_queue of
+                  Nothing -> []
+                  Just (v,p,k,pq) -> if L.elem desired_vertex v
+                          then v
+                          else go
+                                   desired_vertex
+                                   (addStarNeighbours pq v p k graph heuristic)
+
+
+-- | A* Graph search
+-- Modification of A* tree search.  We don't use evaluated vertices.
+aStar :: (Ord v,Hashable v,Ord e,Num e,Show v,Show e)
+      => v -> v -> Graph v e -> Heuristic v e -> [v]
+aStar s g graph heuristic = go
+        g
+        (HPSQ.singleton
+             [s]
+             (heuristic s)
+             s)
+        S.empty
+    where go desired_vertex priority_queue closedSet = case HPSQ.minView
+                                                                priority_queue of
+                  Nothing -> []
+                  Just (v,p,k,pq)
+                      | L.elem desired_vertex v ->
+                          v
+                      | S.member k closedSet ->
+                          go desired_vertex pq closedSet
+                      | otherwise ->
+                          go
+                              desired_vertex
+                              (addStarNeighbours pq v p k graph heuristic)
+                              (S.insert k closedSet)
+
 -- Internal functions
+
+-- | Add all neighbors of given vertex with heuristic priority to Priority Queue
+addStarNeighbours :: (Ord v,Hashable v,Ord e,Num e)
+                  => HPSQ.HashPSQ [v] e v  -- ^ Priority queue
+                  -> [v]  -- ^ Current path
+                  -> e  -- ^ priority
+                  -> v  -- ^ current vertex
+                  -> Graph v e  -- ^ graph
+                  -> Heuristic v e  -- ^ heuristic
+                  -> HPSQ.HashPSQ [v] e v
+addStarNeighbours pq cp p cv g h = foldr
+        (\(v_new,e_new) _pq ->
+              HPSQ.insert
+                  (cp ++
+                   [v_new])
+                  (p - h cv + e_new + h v_new)
+                  v_new
+                  _pq)
+        pq
+        (neighboursWithEdges cv g)
 
 -- | Add all neighbors of given vertex to Priority Queue
 addNeighbours :: (Ord v,Hashable v)
