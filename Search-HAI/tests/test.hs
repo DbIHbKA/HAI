@@ -2,6 +2,7 @@
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
+import           Algorithms.DataTypes (Graph, fromList)
 import           Algorithms.SearchHAI
 
 
@@ -22,5 +23,11 @@ tests = testGroup "Tests" [dfsUnitTests]
 
 dfsUnitTests = testGroup
         "dfs Unit tests"
-        [ testCase "Find path with dfs fro S to G" $
-          (dfs "S" "G" graph) `compare` ["S", "A", "B", "C", "G"] @?= EQ]
+        [ testCase "Find path with dfs from S to G" $
+          dfs "S" "G" graph @?= ["S", "A", "B", "C", "G"]
+        , testCase "Find no path with dfs" $
+          dfs "S" "Q" graph @?= []]
+
+
+bfsUnitTests = testGroup
+             "bfs Unit tests" [ testCase "Find path with bfs from S to G" $ bfs "S" "G" graph @?= ["S", "A", "C", "G"]]
