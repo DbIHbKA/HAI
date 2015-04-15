@@ -1,32 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Algorithms.SearchHAI where
+module Algorithms.SearchHAI
+       (bfs, dfs) where
 
-import           Data.Hashable (Hashable)
-import qualified Data.HashPSQ  as HPSQ
-import qualified Data.List     as L
-import           Data.Map      (Map)
-import qualified Data.Map      as M
-import           Data.Maybe    (fromMaybe)
+import           Algorithms.DataTypes (Graph, neighbours)
+import           Data.Hashable        (Hashable)
+import qualified Data.HashPSQ         as HPSQ
+import qualified Data.List            as L
 
 
-type Graph v e = Map v [(v, e)]
-
--- | Create graph from list
-fromList :: Ord v
-         => [(v,(v,e))] -> Graph v e
-fromList = foldr
-        (\(k,(v,w)) m ->
-              M.insertWith
-                  (++)
-                  k
-                  [(v, w)]
-                  m)
-        M.empty
-
--- | Depth-Fst Tree Search
+-- | Depth-First Tree Search
 -- Find path in graph from start vertex to desired vertex
-dfs :: (Ord v,Hashable v, Show v)
+-- If there is no path return empty path
+dfs :: (Ord v,Hashable v)
     => v  -- ^ start vertex
     -> v  -- ^ desired vertex
     -> Graph v e -- ^ graph
@@ -37,26 +23,65 @@ dfs s g graph = go
              [s]
              (-1)
              s)
-    where go desired_vertex priority_queue = case HPSQ.findMin priority_queue of
+    where go desired_vertex priority_queue = case HPSQ.minView priority_queue of
                   Nothing -> []
-                  Just (v,p,k) -> if L.elem desired_vertex v
+                  Just (v,p,k,pq) -> if L.elem desired_vertex v
                           then v
                           else go
                                    desired_vertex
-                                   (add_neighbours
-                                        priority_queue
+                                   (addNeighbours
+                                        pq
                                         k
                                         (p - 1)
-                                        v)
-          neighbours v = map fst $
-              fromMaybe [] (M.lookup v graph)
-          add_neighbours pq cv p v = foldr
-                  (\v_new _pq ->
-                        HPSQ.insert
-                            (v ++
-                             [v_new])
-                            p
-                            v_new
-                            _pq)
-                  pq
-                  (neighbours cv)
+                                        v
+                                        graph)
+
+
+-- | Breadth-First Tree Search
+-- Find shortest path in graph between two vertexes
+-- if there is no path return empty path
+bfs :: (Ord v,Hashable v)
+    => v  -- ^ start vertex
+    -> v  -- ^ desired vertex
+    -> Graph v e
+    -> [v]
+bfs s g graph = go
+        g
+        (HPSQ.singleton
+             [s]
+             1
+             s)
+    where go desired_vertex priority_queue = case HPSQ.minView priority_queue of
+                  Nothing -> []
+                  Just (v,p,k,pq) -> if L.elem desired_vertex v
+                          then v
+                          else go
+                                   desired_vertex
+                                   (addNeighbours
+                                        pq
+                                        k
+                                        (p + 1)
+                                        v
+                                        graph)
+
+
+-- Internal functions
+
+-- | Add all neighbors of given vertex to Priority Queue
+addNeighbours :: (Ord v,Hashable v)
+              => HPSQ.HashPSQ [v] Int v
+              -> v
+              -> Int
+              -> [v]
+              -> Graph v e
+              -> HPSQ.HashPSQ [v] Int v
+addNeighbours pq cv p v graph = foldr
+        (\v_new _pq ->
+              HPSQ.insert
+                  (v ++
+                   [v_new])
+                  p
+                  v_new
+                  _pq)
+        pq
+        (neighbours cv graph)
