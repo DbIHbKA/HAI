@@ -12,7 +12,7 @@ module Algorithms.Graph
     , neighbours
     , neighboursWithEdges
     -- * Search Path
-    , floydwarchall
+    , floydwarshall
     ) where
 
 import           Data.Map   (Map)
@@ -66,8 +66,8 @@ neighboursWithEdges v graph = fromMaybe [] (M.lookup v graph)
 -----------------------------}
 -- | Find shortest path from each pair of vertices
 -- Floyd-Warshall algorithm
-floydwarchall :: (Integral e,Ord v) => Graph v e -> v -> v -> Double
-floydwarchall g vs ve = shortestPath
+floydwarshall :: (Integral e,Ord v) => Graph v e -> v -> v -> Double
+floydwarshall g vs ve = shortestPath
         (encode vs)
         (encode ve)
         n
