@@ -11,12 +11,14 @@ module Algorithms.Graph
     -- * Search Neighbours
     , neighbours
     , neighboursWithEdges
+    -- * Search Path
+    , floydwarchall
     ) where
 
 import           Data.Map   (Map)
 import qualified Data.Map   as M
 import           Data.Maybe (fromMaybe)
-import qualified Data.Set   as S
+
 
 -- | A Graph with vertex @v@ and edges @e@
 type Graph v e = Map v [(v, e)]
@@ -34,7 +36,7 @@ vertices = M.keys
   Lists
 -------------------------}
 -- | Create graph from list
-fromList :: (Ord v,Num e,Ord e)
+fromList :: (Ord v,Num e,Ord e,Integral e)
          => [(v,(v,e))] -> Graph v e
 fromList = foldr
         (\(k,(v,w)) m ->
@@ -60,25 +62,63 @@ neighboursWithEdges :: Ord v
 neighboursWithEdges v graph = fromMaybe [] (M.lookup v graph)
 
 {----------------------------
-  Sort
+  Search Path
 -----------------------------}
-topsort :: Graph v e -> Graph v e
-topsort g = topsort' (vertices g) [] [] g
+-- | Find shortest path from each pair of vertices
+-- Floyd-Warshall algorithm
+floydwarchall :: (Integral e,Ord v) => Graph v e -> v -> v -> Double
+floydwarchall g vs ve = shortestPath
+        (encode vs)
+        (encode ve)
+        n
+    where vers = vertices g
+          n = length vers
+          encode v = fromMaybe 0 (M.lookup v g2)
+          g2 = M.fromList
+                  (zip vers [1 ..])
+          eg = encodeGraph g
+          edgeValue s e sg = case M.lookup s sg of
+                  Nothing -> Nothing
+                  Just edges -> case filter
+                                         (\x ->
+                                               e == fst x)
+                                         edges of
+                          [] -> Nothing
+                          ((_v,_e):_) -> Just (fromIntegral _e)
+          shortestPath i j 0 = fromMaybe infty (edgeValue i j eg)
+          shortestPath i j k = min
+                  (shortestPath
+                       i
+                       j
+                       (k - 1))
+                  (shortestPath
+                       i
+                       k
+                       (k - 1) +
+                   shortestPath
+                       k
+                       j
+                       (k - 1))
 
 
-topsort' (white:whites) greys black graph = go
-        whites
-        (white : greys)
-        black
-        white
-    where go ws [] bs c = case neighbours c graph of
-                  [] -> topsort' ws [] bs graph
-                  (c':_) -> go ws [c] bs c'
-          go ws (g:gs) bs c = case neighbours c graph of
-                  [] -> go ws gs (c : bs) g
-                  cs -> case notInGreyC
-                                 cs
-                                 (g : gs) of
-                          Nothing -> go ws gs (c : bs) g
-                          Just c' -> go ws (g : gs) bs c'
-          notInGreyC = undefined
+
+{----------------------------
+  Internal functions
+-----------------------------}
+-- | Encode graph with verices' labels are arbitrary symbol
+-- to graph with vertices where labels are positive numbers
+encodeGraph :: (Ord v) => Graph v e -> Graph Int e
+encodeGraph g = M.map
+        (map
+             (\(v,e) ->
+                   (encode v, e))) $
+    M.mapKeys encode g
+    where encode k1 = fromMaybe 0 (M.lookup k1 g2)
+          g2 = M.fromList
+                  (zip
+                       (vertices g)
+                       [1 ..])
+
+-- | Infinity
+infty :: Double
+infty = read "Infinity"
