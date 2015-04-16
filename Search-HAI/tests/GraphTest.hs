@@ -36,17 +36,17 @@ tests = testGroup "Graph tests" [floydwarchallUnitTests]
 floydwarchallUnitTests = testGroup
         "Floyd-Warshall testing"
         [ testCase "Path from S to B" $
-          G.floydwarchall graph "S" "B" @?=
+          G.floydwarshall graph "S" "B" @?=
           2.0
         , testCase "Path from S to A" $
-          G.floydwarchall graph "S" "A" @?=
+          G.floydwarshall graph "S" "A" @?=
           1.0
         , testCase "Path from A to B" $
-          G.floydwarchall graph "A" "B" @?=
+          G.floydwarshall graph "A" "B" @?=
           1.0
         , testCase "Path from S to B in graphAStar" $
-          G.floydwarchall graphAStar "S" "B" @?=
+          G.floydwarshall graphAStar "S" "B" @?=
           3.0
         , testCase "Path from A to G in graphAStar" $
-          G.floydwarchall graphAStar "A" "G" @?=
+          G.floydwarshall graphAStar "A" "G" @?=
           7.0]
